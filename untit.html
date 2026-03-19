@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus Music Vault v6</title>
+    <style>
+        :root { --bg: #000; --accent: #1DB954; --card: #121212; }
+        body { 
+            background: var(--bg); color: #fff; font-family: 'Inter', sans-serif;
+            margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center;
+        }
+        .wrapper { width: 100%; max-width: 400px; margin-top: 40px; }
+        h1 { font-weight: 200; letter-spacing: 4px; text-align: center; margin-bottom: 30px; opacity: 0.7; }
+
+        .add-card { background: var(--card); padding: 20px; border-radius: 20px; border: 1px solid #222; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        input { 
+            width: 100%; background: #000; border: 1px solid #333; border-radius: 10px;
+            color: #fff; padding: 12px; margin-bottom: 12px; box-sizing: border-box; outline: none; transition: 0.3s;
+        }
+        input:focus { border-color: var(--accent); }
+        button { 
+            width: 100%; background: var(--accent); color: #000; border: none; 
+            padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.2s;
+        }
+        button:active { transform: scale(0.98); }
+
+        .song-list { display: flex; flex-direction: column; gap: 10px; }
+        .song-item { 
+            background: var(--card); padding: 15px; border-radius: 12px;
+            display: flex; justify-content: space-between; align-items: center;
+            border: 1px solid transparent; transition: 0.3s;
+        }
+        .song-item:hover { border-color: #333; background: #181818; }
+        .song-link { color: #fff; text-decoration: none; display: flex; align-items: center; gap: 12px; flex-grow: 1; font-size: 15px; }
+        .dot { height: 8px; width: 8px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 5px var(--accent); }
+        .del-btn { color: #444; font-size: 11px; cursor: pointer; padding: 5px; }
+        .del-btn:hover { color: #ff4d4d; }
+    </style>
+</head>
+<body>
+
+<div class="wrapper">
+    <h1>VAULT.</h1>
+
+    <div class="add-card">
+        <input type="text" id="sName" placeholder="Song Name (e.g. Humdum)">
+        <input type="text" id="sLink" placeholder="Paste full message or link here...">
+        <button onclick="saveSong()">SAVE TRACK</button>
+    </div>
+
+    <div class="song-list" id="vaultDisplay"></div>
+</div>
+
+<script>
+    let myVault = JSON.parse(localStorage.getItem('music_vault_v6')) || [];
+    renderVault();
+
+    function saveSong() {
+        const nameInput = document.getElementById('sName');
+        const linkInput = document.getElementById('sLink');
+        let rawInput = linkInput.value;
+
+        // --- AUTOMATION MAGIC START ---
+        // Ye regex poore text mein se "http..." wala link dhoond lega
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        const foundLinks = rawInput.match(urlRegex);
+        
+        if (!foundLinks) {
+            alert("Bhai isme koi link nahi mila!");
+            return;
+        }
+        
+        let finalLink = foundLinks[0]; // Pehla link jo mila
+        // --- AUTOMATION MAGIC END ---
+
+        if (nameInput.value && finalLink) {
+            myVault.push({ name: nameInput.value, link: finalLink });
+            localStorage.setItem('music_vault_v6', JSON.stringify(myVault));
+            
+            nameInput.value = '';
+            linkInput.value = '';
+            renderVault();
+        } else {
+            alert("Naam toh likh do bhai!");
+        }
+    }
+
+    function renderVault() {
+        const container = document.getElementById('vaultDisplay');
+        container.innerHTML = myVault.length ? "" : "<p style='text-align:center; color:#444; font-size:12px;'>No tracks saved.</p>";
+        
+        myVault.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = 'song-item';
+            div.innerHTML = `
+                <a href="${item.link}" target="_blank" class="song-link">
+                    <div class="dot"></div>
+                    <span>${item.name}</span>
+                </a>
+                <div class="del-btn" onclick="deleteSong(${index})">REMOVE</div>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function deleteSong(i) {
+        myVault.splice(i, 1);
+        localStorage.setItem('music_vault_v6', JSON.stringify(myVault));
+        renderVault();
+    }
+</script>
+
+</body>
+</html>
